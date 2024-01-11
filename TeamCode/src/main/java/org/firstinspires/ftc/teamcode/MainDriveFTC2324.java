@@ -33,16 +33,14 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.java_websocket.framing.ContinuousFrame;
 
 @TeleOp(name="mainDrive", group="Linear OpMode")
-public class MotorSample extends LinearOpMode {
+public class MainDriveFTC2324 extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
@@ -65,6 +63,8 @@ public class MotorSample extends LinearOpMode {
     private double spinLB;
 
     private double spinRB;
+
+    private double turnDirection;
 
     private double heading;
 
@@ -103,21 +103,22 @@ public class MotorSample extends LinearOpMode {
         leftBackDrive  = hardwareMap.get(DcMotor.class, "back_left_drive");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "front_right_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "back_right_drive");
+        /*
         elbowMotor = hardwareMap.get(DcMotor.class, "elbow_motor");
         servo = hardwareMap.get(Servo.class, "wrist_servo");
         leftClaw = hardwareMap.get(Servo.class, "left_claw");
         rightClaw = hardwareMap.get(Servo.class, "right_claw");
+        */
 
-
-
-        leftFrontDrive.setDirection(DcMotor.Direction.REVERSE);
+        leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
         rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
+/*
         elbowMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         leftClaw.setDirection(Servo.Direction.REVERSE);
         servo.resetDeviceConfigurationForOpMode();
-
+*/
 
         //elbowMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
@@ -133,62 +134,73 @@ public class MotorSample extends LinearOpMode {
             angles = imu.getAngularOrientation();
             getX = gamepad1.left_stick_x;
             getY = gamepad1.left_stick_y;
-            theta = getAngle(getX, getY);
+            driveAngle = getAngle(getX, getY);
             magnitude = getMag(getX, getY);
 
-            spinLB = 0;
-            spinRB = 0;
-            spinLF = 0;
-            spinRF = 0;
+//            spinLB = 0;
+//            spinRB = 0;
+//            spinLF = 0;
+//            spinRF = 0;
             heading = angles.firstAngle * (Math.PI / 180);
-            driveAngle = theta + heading;
-            if (driveAngle > Math.PI)
+            theta = driveAngle + heading;
+            if (theta > Math.PI)
             {
-                driveAngle = driveAngle - (Math.PI * 2);
+                theta = theta - (Math.PI * 2);
             }
 
-            if (driveAngle < -1 * Math.PI)
+            if (theta < -1 * Math.PI)
             {
-                driveAngle = driveAngle + (Math.PI * 2);
+                theta = theta + (Math.PI * 2);
             }
 
-            if (gamepad1.left_bumper)
-            {
-                spinLF = 1;
-                spinRF = -1;
-                spinLB = 1;
-                spinRB = -1;
-            }
+            double[] motorPowers = getMoterPowers(theta, magnitude, turnDirection);
+            leftFrontDrive.setPower(motorPowers[0]);
+            rightFrontDrive.setPower(motorPowers[1]);
+            leftBackDrive.setPower(motorPowers[2]);
+            rightBackDrive.setPower(motorPowers[3]);
 
-            if (gamepad1.right_bumper)
-            {
-                spinLF = -1;
-                spinRF = 1;
-                spinLB = -1;
-                spinRB = 1;
-            }
 
-            if (gamepad1.right_bumper || gamepad1.left_bumper)
-            {
-                leftFrontDrive.setPower(((motorB(driveAngle, magnitude * speed)) + spinLF) / 2);
-                rightFrontDrive.setPower(((motorA(driveAngle, magnitude * speed)) + spinRF) / 2);
-                leftBackDrive.setPower(((motorA(driveAngle, magnitude * speed)) + spinLB) / 2);
-                rightBackDrive.setPower(((motorB(driveAngle, magnitude * speed)) + spinRB) / 2);
-            }
-            else
-            {
-                leftFrontDrive.setPower(motorB(driveAngle, magnitude * speed));
-                rightFrontDrive.setPower(motorA(driveAngle, magnitude * speed));
-                leftBackDrive.setPower(motorA(driveAngle, magnitude * speed));
-                rightBackDrive.setPower(motorB(driveAngle, magnitude * speed));
-            }
+//            if (gamepad1.left_bumper)
+//            {
+//                spinLF = 1;
+//                spinRF = -1;
+//                spinLB = 1;
+//                spinRB = -1;
+//            }
+//
+//            if (gamepad1.right_bumper)
+//            {
+//                spinLF = -1;
+//                spinRF = 1;
+//                spinLB = -1;
+//                spinRB = 1;
+//            }
+
+
+
+//            if (gamepad1.right_bumper || gamepad1.left_bumper)
+//            {
+//                leftFrontDrive.setPower(((motorB(driveAngle, magnitude * speed)) + spinLF) / 2);
+//                rightFrontDrive.setPower(((motorA(driveAngle, magnitude * speed)) + spinRF) / 2);
+//                leftBackDrive.setPower(((motorA(driveAngle, magnitude * speed)) + spinLB) / 2);
+//                rightBackDrive.setPower(((motorB(driveAngle, magnitude * speed)) + spinRB) / 2);
+//            }
+//            else
+//            {
+//                leftFrontDrive.setPower(motorB(driveAngle, magnitude * speed));
+//                rightFrontDrive.setPower(motorA(driveAngle, magnitude * speed));
+//                leftBackDrive.setPower(motorA(driveAngle, magnitude * speed));
+//                rightBackDrive.setPower(motorB(driveAngle, magnitude * speed));
+//            }
+
+
 
             //elbowMotor.setPower(gamepad1.right_stick_y / 2);
             //if (gamepad1.right_stick_y != 0)
             //{
                 //elbowTarget = elbowMotor.getCurrentPosition() ;
             //}
-
+/*
             if (elbowTarget - 100 >= elbowMotor.getCurrentPosition())
             {
                 elbowMotor.setPower(0.5);
@@ -217,7 +229,7 @@ public class MotorSample extends LinearOpMode {
             {
                 elbowTarget = pickUpPos;
                 dropActive=false;
-                servo.setPosition(0.5);
+                servo.setPosition(0.6);
             }
 
             if (gamepad1.a)
@@ -232,7 +244,7 @@ public class MotorSample extends LinearOpMode {
             if(gamepad1.y)
             {
                 elbowTarget = 6000;
-                servo.setPosition(0.53);
+                servo.setPosition(0.5);
                 dropActive=false;
             }
             if(gamepad1.dpad_down)
@@ -242,19 +254,15 @@ public class MotorSample extends LinearOpMode {
             }
             if (gamepad1.dpad_up)
             {
-                leftClaw.setPosition(0.2);
-                rightClaw.setPosition(0.2);
+                leftClaw.setPosition(0.15);
+                rightClaw.setPosition(0.15);
             }
 
             if (dropActive)
             {
-                servo.setPosition(((elbowMotor.getCurrentPosition()-6500) * -0.000118466898955) + 0.5);
+                servo.setPosition(((elbowMotor.getCurrentPosition()-6500) * -0.000118466898955) + 0.6);
             }
-
-
-
-
-
+*/
 
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Angle", "stickAngle " + getAngle(getX, getY));
@@ -265,12 +273,14 @@ public class MotorSample extends LinearOpMode {
             telemetry.addData("bPower", "b" + motorB(theta, magnitude));
             telemetry.addData("Heading", formatAngle(angles.angleUnit, angles.firstAngle));
             telemetry.addData("isX ", gamepad1.x);
+/*
             telemetry.addData("motorPosition", elbowMotor.getCurrentPosition());
             telemetry.addData("Target", elbowTarget);
             //telemetry.addData("servoPosition", servo.getPosition());
             telemetry.addData("leftPosition", leftClaw.getPosition());
             //telemetry.addData("rightPosition", rightClaw.getPosition());
             telemetry.addData("Wrist Angle", servo.getPosition());
+*/
             telemetry.update();
         }
 
@@ -299,6 +309,26 @@ public class MotorSample extends LinearOpMode {
     }
 
 
+
+    private double[] getMoterPowers(double theta, double mag, double turn) {
+        double sin = Math.sin(theta + 3 * (Math.PI/4)); // Unchecked
+        double cos = Math.cos(theta + 3 * (Math.PI/4)); // Unchecked
+        double max = Math.max(Math.abs(sin), Math.abs(cos));
+
+        double leftFront = mag * cos/max + turn;
+        double rightFront = mag * sin/max - turn;
+        double leftRear = mag * sin/max + turn;
+        double rightRear = mag * cos/max  - turn;
+
+        if ((mag + Math.abs(turn)) > 1) {
+            leftFront /= mag + turn;
+            rightFront /= mag + turn;
+            leftRear /= mag + turn;
+            rightRear /= mag + turn;
+        }
+
+        return new double[]{leftFront, rightFront, leftRear, rightRear};
+    }
 
 }
 

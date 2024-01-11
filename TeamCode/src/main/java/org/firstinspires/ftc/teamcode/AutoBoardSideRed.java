@@ -27,13 +27,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.robotcontroller.external.samples;
+package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -56,8 +54,8 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@Autonomous(name="ParkBoardSide", group="Robot")
-public class RobotAutoDriveByTime_Linear extends LinearOpMode {
+@Autonomous(name="ParkBoardSideRed", group="Robot")
+public class AutoBoardSideRed extends LinearOpMode {
 
     /* Declare OpMode members. */
     private DcMotor leftFrontDrive = null;
@@ -103,7 +101,7 @@ public class RobotAutoDriveByTime_Linear extends LinearOpMode {
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
 
-        driveForTimePeriod(0.6, degreesToRadians(0) , 3);
+        driveForTimePeriod(0.6, degreesToRadians(180) , 3.5);
         driveForTimePeriod(0.5, degreesToRadians(90), 0.3);
         dropPixel(6000);
 
