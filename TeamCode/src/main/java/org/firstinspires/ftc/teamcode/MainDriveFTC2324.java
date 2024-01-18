@@ -142,7 +142,7 @@ public class MainDriveFTC2324 extends LinearOpMode {
 //            spinLF = 0;
 //            spinRF = 0;
             heading = angles.firstAngle * (Math.PI / 180);
-            theta = driveAngle + heading;
+            theta = driveAngle + heading; //took out "+ heading" after driveAngle
             if (theta > Math.PI)
             {
                 theta = theta - (Math.PI * 2);
@@ -153,11 +153,22 @@ public class MainDriveFTC2324 extends LinearOpMode {
                 theta = theta + (Math.PI * 2);
             }
 
+            if (gamepad1.right_bumper)
+            {
+                turnDirection -= 1;
+            }
+            if (gamepad1.left_bumper)
+            {
+                turnDirection += 1;
+            }
+
             double[] motorPowers = getMoterPowers(theta, magnitude, turnDirection);
             leftFrontDrive.setPower(motorPowers[0]);
             rightFrontDrive.setPower(motorPowers[1]);
             leftBackDrive.setPower(motorPowers[2]);
             rightBackDrive.setPower(motorPowers[3]);
+
+            turnDirection = 0;
 
 
 //            if (gamepad1.left_bumper)
@@ -311,14 +322,14 @@ public class MainDriveFTC2324 extends LinearOpMode {
 
 
     private double[] getMoterPowers(double theta, double mag, double turn) {
-        double sin = Math.sin(theta + 3 * (Math.PI/4)); // Unchecked
-        double cos = Math.cos(theta + 3 * (Math.PI/4)); // Unchecked
+        double sin = Math.sin(theta - Math.PI/4); // Unchecked
+        double cos = Math.cos(theta - Math.PI/4); // Unchecked
         double max = Math.max(Math.abs(sin), Math.abs(cos));
 
-        double leftFront = mag * cos/max + turn;
-        double rightFront = mag * sin/max - turn;
-        double leftRear = mag * sin/max + turn;
-        double rightRear = mag * cos/max  - turn;
+        double leftFront = mag * sin/max + turn;  //reversed all 4, sin <-> cos
+        double rightFront = mag * cos/max - turn;
+        double leftRear = mag * cos/max + turn;
+        double rightRear = mag * sin/max  - turn;
 
         if ((mag + Math.abs(turn)) > 1) {
             leftFront /= mag + turn;
