@@ -36,6 +36,20 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.Range;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /*
  * This OpMode illustrates the concept of driving a path based on time.
@@ -56,7 +70,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
  * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
  */
 
-@Autonomous(name="ParkBoardSide", group="Robot")
+@Autonomous(name="BlueBoardSide", group="Robot")
 public class RobotAutoDriveByTime_Linear extends LinearOpMode {
 
     /* Declare OpMode members. */
@@ -64,9 +78,14 @@ public class RobotAutoDriveByTime_Linear extends LinearOpMode {
     private DcMotor leftBackDrive = null;
     private DcMotor rightFrontDrive = null;
     private DcMotor rightBackDrive = null;
-    private DcMotor elbowMotor = null;
-    private Servo leftClaw = null;
-    private Servo rightClaw = null;
+//    private DcMotor elbowMotor = null;
+//    private Servo leftClaw = null;
+//    private Servo rightClaw = null;
+    private VisionPortal visionPortal;               // Used to manage the video source.
+    private AprilTagProcessor aprilTag;              // Used for managing the AprilTag detection process.
+    private AprilTagDetection desiredTag = null;
+    private static final boolean USE_WEBCAM = true;  // Set true to use a webcam, or false for a phone camera
+    private static final int DESIRED_TAG_ID = -1;
 
 
 
@@ -83,29 +102,32 @@ public class RobotAutoDriveByTime_Linear extends LinearOpMode {
         leftBackDrive  = hardwareMap.get(DcMotor.class, "back_left_drive");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "front_right_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "back_right_drive");
-        elbowMotor = hardwareMap.get(DcMotor.class, "elbow_motor");
-        leftClaw = hardwareMap.get(Servo.class, "left_claw");
-        rightClaw = hardwareMap.get(Servo.class, "right_claw");
+//        elbowMotor = hardwareMap.get(DcMotor.class, "elbow_motor");
+//        leftClaw = hardwareMap.get(Servo.class, "left_claw");
+//        rightClaw = hardwareMap.get(Servo.class, "right_claw");
+
+        initAprilTag();
+        waitForStart();
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
-        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
-        leftClaw.setDirection(Servo.Direction.REVERSE);
-
-        // Send telemetry message to signify robot waiting;
-        telemetry.addData("Status", "Ready to run");    //
-        telemetry.update();
-
-        // Wait for the game to start (driver presses PLAY)
-        waitForStart();
-
-        driveForTimePeriod(0.6, degreesToRadians(0) , 3);
-        driveForTimePeriod(0.5, degreesToRadians(90), 0.3);
-        dropPixel(6000);
+//        leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+//        leftBackDrive.setDirection(DcMotor.Direction.REVERSE);
+//        rightFrontDrive.setDirection(DcMotor.Direction.FORWARD);
+//        rightBackDrive.setDirection(DcMotor.Direction.FORWARD);
+//        leftClaw.setDirection(Servo.Direction.REVERSE);
+//
+//        // Send telemetry message to signify robot waiting;
+//        telemetry.addData("Status", "Ready to run");    //
+//        telemetry.update();
+//
+//        // Wait for the game to start (driver presses PLAY)
+//        waitForStart();
+//
+//        driveForTimePeriod(0.6, degreesToRadians(0) , 3);
+//        driveForTimePeriod(0.5, degreesToRadians(90), 0.3);
+//        dropPixel(6000);
 
 
 
@@ -149,43 +171,69 @@ public class RobotAutoDriveByTime_Linear extends LinearOpMode {
         return degrees * (Math.PI / 180);
     }
 
-    private void dropPixel(int elbowTarget)
-    {
+//    private void dropPixel(int elbowTarget)
+//    {
+//
+//        while(elbowTarget != elbowMotor.getCurrentPosition()) {
+//            if (elbowTarget - 100 >= elbowMotor.getCurrentPosition()) {
+//                elbowMotor.setPower(0.5);
+//            } else if (elbowTarget + 100 <= elbowMotor.getCurrentPosition()) {
+//                elbowMotor.setPower(-0.5);
+//            } else if (elbowTarget >= elbowMotor.getCurrentPosition()) {
+//                //elbowMotor.setPower(((elbowTarget- elbowMotor.getCurrentPosition() / 100) * -0.5));
+//                elbowMotor.setPower(0.1);
+//            } else if (elbowTarget <= elbowMotor.getCurrentPosition()) {
+//                //elbowMotor.setPower(((elbowTarget- elbowMotor.getCurrentPosition() / 100) * 0.5));
+//                elbowMotor.setPower(-0.1);
+//            }
+//        }
+//        double time = runtime.seconds();
+//        while(runtime.seconds() <= time + 1) {
+//            leftClaw.setPosition(0.2);
+//            rightClaw.setPosition(0.2);
+//        }
+//        while(runtime.seconds() <= time + 2) {
+//            leftClaw.setPosition(0);
+//            rightClaw.setPosition(0);
+//        }
+//        while(0 != elbowMotor.getCurrentPosition()) {
+//            if (elbowTarget - 100 >= elbowMotor.getCurrentPosition()) {
+//                elbowMotor.setPower(0.5);
+//            } else if (elbowTarget + 100 <= elbowMotor.getCurrentPosition()) {
+//                elbowMotor.setPower(-0.5);
+//            } else if (elbowTarget >= elbowMotor.getCurrentPosition()) {
+//                //elbowMotor.setPower(((elbowTarget- elbowMotor.getCurrentPosition() / 100) * -0.5));
+//                elbowMotor.setPower(0.1);
+//            } else if (elbowTarget <= elbowMotor.getCurrentPosition()) {
+//                //elbowMotor.setPower(((elbowTarget- elbowMotor.getCurrentPosition() / 100) * 0.5));
+//                elbowMotor.setPower(-0.1);
+//            }
+//        }
+//    }
+    private void initAprilTag() {
+        // Create the AprilTag processor by using a builder.
+        aprilTag = new AprilTagProcessor.Builder().build();
 
-        while(elbowTarget != elbowMotor.getCurrentPosition()) {
-            if (elbowTarget - 100 >= elbowMotor.getCurrentPosition()) {
-                elbowMotor.setPower(0.5);
-            } else if (elbowTarget + 100 <= elbowMotor.getCurrentPosition()) {
-                elbowMotor.setPower(-0.5);
-            } else if (elbowTarget >= elbowMotor.getCurrentPosition()) {
-                //elbowMotor.setPower(((elbowTarget- elbowMotor.getCurrentPosition() / 100) * -0.5));
-                elbowMotor.setPower(0.1);
-            } else if (elbowTarget <= elbowMotor.getCurrentPosition()) {
-                //elbowMotor.setPower(((elbowTarget- elbowMotor.getCurrentPosition() / 100) * 0.5));
-                elbowMotor.setPower(-0.1);
-            }
-        }
-        double time = runtime.seconds();
-        while(runtime.seconds() <= time + 1) {
-            leftClaw.setPosition(0.2);
-            rightClaw.setPosition(0.2);
-        }
-        while(runtime.seconds() <= time + 2) {
-            leftClaw.setPosition(0);
-            rightClaw.setPosition(0);
-        }
-        while(0 != elbowMotor.getCurrentPosition()) {
-            if (elbowTarget - 100 >= elbowMotor.getCurrentPosition()) {
-                elbowMotor.setPower(0.5);
-            } else if (elbowTarget + 100 <= elbowMotor.getCurrentPosition()) {
-                elbowMotor.setPower(-0.5);
-            } else if (elbowTarget >= elbowMotor.getCurrentPosition()) {
-                //elbowMotor.setPower(((elbowTarget- elbowMotor.getCurrentPosition() / 100) * -0.5));
-                elbowMotor.setPower(0.1);
-            } else if (elbowTarget <= elbowMotor.getCurrentPosition()) {
-                //elbowMotor.setPower(((elbowTarget- elbowMotor.getCurrentPosition() / 100) * 0.5));
-                elbowMotor.setPower(-0.1);
-            }
+        // Adjust Image Decimation to trade-off detection-range for detection-rate.
+        // eg: Some typical detection data using a Logitech C920 WebCam
+        // Decimation = 1 ..  Detect 2" Tag from 10 feet away at 10 Frames per second
+        // Decimation = 2 ..  Detect 2" Tag from 6  feet away at 22 Frames per second
+        // Decimation = 3 ..  Detect 2" Tag from 4  feet away at 30 Frames Per Second
+        // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second
+        // Note: Decimation can be changed on-the-fly to adapt during a match.
+        aprilTag.setDecimation(2);
+
+        // Create the vision portal by using a builder.
+        if (USE_WEBCAM) {
+            visionPortal = new VisionPortal.Builder()
+                    .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                    .addProcessor(aprilTag)
+                    .build();
+        } else {
+            visionPortal = new VisionPortal.Builder()
+                    .setCamera(BuiltinCameraDirection.BACK)
+                    .addProcessor(aprilTag)
+                    .build();
         }
     }
     //used for leftfront and rightback

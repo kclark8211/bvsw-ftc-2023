@@ -137,12 +137,8 @@ public class MainDriveFTC2324 extends LinearOpMode {
             driveAngle = getAngle(getX, getY);
             magnitude = getMag(getX, getY);
 
-//            spinLB = 0;
-//            spinRB = 0;
-//            spinLF = 0;
-//            spinRF = 0;
             heading = angles.firstAngle * (Math.PI / 180);
-            theta = driveAngle + heading; //took out "+ heading" after driveAngle
+            theta = driveAngle + heading;
             if (theta > Math.PI)
             {
                 theta = theta - (Math.PI * 2);
@@ -169,25 +165,6 @@ public class MainDriveFTC2324 extends LinearOpMode {
             rightBackDrive.setPower(motorPowers[3]);
 
             turnDirection = 0;
-
-
-//            if (gamepad1.left_bumper)
-//            {
-//                spinLF = 1;
-//                spinRF = -1;
-//                spinLB = 1;
-//                spinRB = -1;
-//            }
-//
-//            if (gamepad1.right_bumper)
-//            {
-//                spinLF = -1;
-//                spinRF = 1;
-//                spinLB = -1;
-//                spinRB = 1;
-//            }
-
-
 
 //            if (gamepad1.right_bumper || gamepad1.left_bumper)
 //            {
