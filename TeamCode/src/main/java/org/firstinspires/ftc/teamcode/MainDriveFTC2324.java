@@ -33,11 +33,13 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.opencv.core.Mat;
 
 @TeleOp(name="mainDrive", group="Linear OpMode")
 public class MainDriveFTC2324 extends LinearOpMode {
@@ -73,8 +75,9 @@ public class MainDriveFTC2324 extends LinearOpMode {
     private double driveAngle;
 
     private int elbowTarget = 0;
+    private double wristTarget = 0;
 
-    private Servo servo = null;
+    private Servo wristServo = null;
 
     private Servo leftClaw = null;
 
@@ -103,24 +106,21 @@ public class MainDriveFTC2324 extends LinearOpMode {
         leftBackDrive  = hardwareMap.get(DcMotor.class, "back_left_drive");
         rightFrontDrive = hardwareMap.get(DcMotor.class, "front_right_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "back_right_drive");
-        /*
+
         elbowMotor = hardwareMap.get(DcMotor.class, "elbow_motor");
-        servo = hardwareMap.get(Servo.class, "wrist_servo");
+        wristServo = hardwareMap.get(Servo.class, "wrist_servo");
         leftClaw = hardwareMap.get(Servo.class, "left_claw");
         rightClaw = hardwareMap.get(Servo.class, "right_claw");
-        */
 
         leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
         rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
-/*
         elbowMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         leftClaw.setDirection(Servo.Direction.REVERSE);
-        servo.resetDeviceConfigurationForOpMode();
-*/
+        wristServo.resetDeviceConfigurationForOpMode();
 
-        //elbowMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        elbowMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
 
         telemetry.addData("Status", "Initialized");
@@ -166,75 +166,66 @@ public class MainDriveFTC2324 extends LinearOpMode {
 
             turnDirection = 0;
 
-//            if (gamepad1.right_bumper || gamepad1.left_bumper)
+
+            // ---------------------------
+            // Move elbow with joystick y
+            elbowMotor.setPower(gamepad1.right_stick_y / 2);
+            if (gamepad1.right_stick_y != 0)
+            {
+                // If joystick is being used, set target position to current position
+                elbowTarget = elbowMotor.getCurrentPosition() ;
+            }
+
+
+            // Elbow adjust to target position
+            double elbowPosition = elbowMotor.getCurrentPosition();
+
+            double elbowError = elbowTarget - elbowPosition;
+            double elbowAdjust = elbowError;
+
+            if (Math.abs(elbowAdjust) >= 100) {
+                // Large arm error - Restrict adjust to [-0.5, 0.5]
+                elbowAdjust = Math.min(Math.max(elbowAdjust, -0.5), 0.5);
+            } else if (Math.abs(elbowAdjust) > 0) {
+                // Small arm error - Restrict adjust to [-0.1, 0.1]
+                elbowAdjust = Math.min(Math.max(elbowAdjust, -0.1), 0.1);
+            }
+
+            if (Math.abs(elbowAdjust) >= 0.1) {
+                elbowMotor.setPower(elbowAdjust);
+            }
+
+//            // Legacy arm adjust
+//            if (elbowTarget - 100 >= elbowPosition)
 //            {
-//                leftFrontDrive.setPower(((motorB(driveAngle, magnitude * speed)) + spinLF) / 2);
-//                rightFrontDrive.setPower(((motorA(driveAngle, magnitude * speed)) + spinRF) / 2);
-//                leftBackDrive.setPower(((motorA(driveAngle, magnitude * speed)) + spinLB) / 2);
-//                rightBackDrive.setPower(((motorB(driveAngle, magnitude * speed)) + spinRB) / 2);
+//                elbowMotor.setPower(0.5);
 //            }
-//            else
+//            else if (elbowTarget + 100 <= elbowPosition)
 //            {
-//                leftFrontDrive.setPower(motorB(driveAngle, magnitude * speed));
-//                rightFrontDrive.setPower(motorA(driveAngle, magnitude * speed));
-//                leftBackDrive.setPower(motorA(driveAngle, magnitude * speed));
-//                rightBackDrive.setPower(motorB(driveAngle, magnitude * speed));
+//                elbowMotor.setPower(-0.5);
+//            }
+//            else if (elbowTarget >= elbowPosition)
+//            {
+//                elbowMotor.setPower(0.1);
+//            }
+//            else if (elbowTarget <= elbowTarget)
+//            {
+//                elbowMotor.setPower(-0.1);
+//            }
+
+//            // Elbow target control
+//            if (gamepad1.right_stick_y != 0) {
+//                elbowTarget -= (int)(gamepad1.right_stick_y * 20);
 //            }
 
 
+            // Wrist Control
+            double wristControl = gamepad1.left_trigger - gamepad1.right_trigger;
+            wristTarget += wristControl;
 
-            //elbowMotor.setPower(gamepad1.right_stick_y / 2);
-            //if (gamepad1.right_stick_y != 0)
-            //{
-                //elbowTarget = elbowMotor.getCurrentPosition() ;
-            //}
-/*
-            if (elbowTarget - 100 >= elbowMotor.getCurrentPosition())
-            {
-                elbowMotor.setPower(0.5);
-            }
-            else if (elbowTarget + 100 <= elbowMotor.getCurrentPosition())
-            {
-                elbowMotor.setPower(-0.5);
-            }
-            else if (elbowTarget >= elbowMotor.getCurrentPosition())
-            {
-                //elbowMotor.setPower(((elbowTarget- elbowMotor.getCurrentPosition() / 100) * -0.5));
-                elbowMotor.setPower(0.1);
-            }
-            else if (elbowTarget  <= elbowMotor.getCurrentPosition())
-            {
-                //elbowMotor.setPower(((elbowTarget- elbowMotor.getCurrentPosition() / 100) * 0.5));
-                elbowMotor.setPower(-0.1);
-            }
+            wristServo.setPosition(wristTarget);
 
-            if (gamepad1.right_stick_y != 0) {
-                elbowTarget = elbowTarget - (int)(gamepad1.right_stick_y * 20);
-            }
-
-
-            if (gamepad1.x)
-            {
-                elbowTarget = pickUpPos;
-                dropActive=false;
-                servo.setPosition(0.6);
-            }
-
-            if (gamepad1.a)
-            {
-                elbowTarget = 6000;
-                dropActive=true;
-            }
-            if (gamepad1.b)
-            {
-                servo.setPosition(0);
-            }
-            if(gamepad1.y)
-            {
-                elbowTarget = 6000;
-                servo.setPosition(0.5);
-                dropActive=false;
-            }
+            // Claw Control
             if(gamepad1.dpad_down)
             {
                 leftClaw.setPosition(0);
@@ -245,12 +236,6 @@ public class MainDriveFTC2324 extends LinearOpMode {
                 leftClaw.setPosition(0.15);
                 rightClaw.setPosition(0.15);
             }
-
-            if (dropActive)
-            {
-                servo.setPosition(((elbowMotor.getCurrentPosition()-6500) * -0.000118466898955) + 0.6);
-            }
-*/
 
             telemetry.addData("Status", "Run Time: " + runtime.toString());
             telemetry.addData("Angle", "stickAngle " + getAngle(getX, getY));
