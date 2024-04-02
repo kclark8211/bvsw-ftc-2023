@@ -33,16 +33,14 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.opencv.core.Mat;
 
-@TeleOp(name="mainDrive", group="Linear OpMode")
-public class MainDriveFTC2324 extends LinearOpMode {
+@TeleOp(name="LegacyMainDrive", group="Linear OpMode")
+public class LegacyMainDrive extends LinearOpMode {
 
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
@@ -107,20 +105,16 @@ public class MainDriveFTC2324 extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "front_right_drive");
         rightBackDrive = hardwareMap.get(DcMotor.class, "back_right_drive");
 
-        elbowMotor = hardwareMap.get(DcMotor.class, "elbow_motor");
-        wristServo = hardwareMap.get(Servo.class, "wrist_servo");
-        leftClaw = hardwareMap.get(Servo.class, "left_claw");
-        rightClaw = hardwareMap.get(Servo.class, "right_claw");
+//        elbowMotor = hardwareMap.get(DcMotor.class, "elbow_motor");
+//        wristServo = hardwareMap.get(Servo.class, "wrist_servo");
+//        leftClaw = hardwareMap.get(Servo.class, "left_claw");
+//        rightClaw = hardwareMap.get(Servo.class, "right_claw");
 
         leftFrontDrive.setDirection(DcMotor.Direction.FORWARD);
         leftBackDrive.setDirection(DcMotor.Direction.FORWARD);
         rightFrontDrive.setDirection(DcMotor.Direction.REVERSE);
         rightBackDrive.setDirection(DcMotor.Direction.REVERSE);
-        elbowMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        leftClaw.setDirection(Servo.Direction.REVERSE);
-        wristServo.resetDeviceConfigurationForOpMode();
 
-        elbowMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
 
         telemetry.addData("Status", "Initialized");
@@ -166,94 +160,6 @@ public class MainDriveFTC2324 extends LinearOpMode {
 
             turnDirection = 0;
 
-
-            // ---------------------------
-            // Move elbow with joystick y
-            elbowMotor.setPower(gamepad1.right_stick_y / 2);
-            if (gamepad1.right_stick_y != 0)
-            {
-                // If joystick is being used, set target position to current position
-                elbowTarget = elbowMotor.getCurrentPosition() ;
-            }
-
-
-            // Elbow adjust to target position
-            double elbowPosition = elbowMotor.getCurrentPosition();
-
-            double elbowError = elbowTarget - elbowPosition;
-            double elbowAdjust = elbowError;
-
-            if (Math.abs(elbowAdjust) >= 100) {
-                // Large arm error - Restrict adjust to [-0.5, 0.5]
-                elbowAdjust = Math.min(Math.max(elbowAdjust, -0.5), 0.5);
-            } else if (Math.abs(elbowAdjust) > 0) {
-                // Small arm error - Restrict adjust to [-0.1, 0.1]
-                elbowAdjust = Math.min(Math.max(elbowAdjust, -0.1), 0.1);
-            }
-
-            if (Math.abs(elbowAdjust) >= 0.1) {
-                elbowMotor.setPower(elbowAdjust);
-            }
-
-//            // Legacy arm adjust
-//            if (elbowTarget - 100 >= elbowPosition)
-//            {
-//                elbowMotor.setPower(0.5);
-//            }
-//            else if (elbowTarget + 100 <= elbowPosition)
-//            {
-//                elbowMotor.setPower(-0.5);
-//            }
-//            else if (elbowTarget >= elbowPosition)
-//            {
-//                elbowMotor.setPower(0.1);
-//            }
-//            else if (elbowTarget <= elbowTarget)
-//            {
-//                elbowMotor.setPower(-0.1);
-//            }
-
-//            // Elbow target control
-//            if (gamepad1.right_stick_y != 0) {
-//                elbowTarget -= (int)(gamepad1.right_stick_y * 20);
-//            }
-
-
-            // Wrist Control
-            double wristControl = gamepad1.left_trigger - gamepad1.right_trigger;
-            wristTarget += wristControl;
-
-            wristServo.setPosition(wristTarget);
-
-            // Claw Control
-            if(gamepad1.dpad_down)
-            {
-                leftClaw.setPosition(0);
-                rightClaw.setPosition(0);
-            }
-            if (gamepad1.dpad_up)
-            {
-                leftClaw.setPosition(0.15);
-                rightClaw.setPosition(0.15);
-            }
-
-            telemetry.addData("Status", "Run Time: " + runtime.toString());
-            telemetry.addData("Angle", "stickAngle " + getAngle(getX, getY));
-            telemetry.addData("Magnitude", "stickMag " + getMag(getX, getY));
-            telemetry.addData("xStick", "x: " + (getX));
-            telemetry.addData("yStick", "y: " + (getY));
-            telemetry.addData("aPower", "a" + motorA(theta, magnitude));
-            telemetry.addData("bPower", "b" + motorB(theta, magnitude));
-            telemetry.addData("Heading", formatAngle(angles.angleUnit, angles.firstAngle));
-            telemetry.addData("isX ", gamepad1.x);
-/*
-            telemetry.addData("motorPosition", elbowMotor.getCurrentPosition());
-            telemetry.addData("Target", elbowTarget);
-            //telemetry.addData("servoPosition", servo.getPosition());
-            telemetry.addData("leftPosition", leftClaw.getPosition());
-            //telemetry.addData("rightPosition", rightClaw.getPosition());
-            telemetry.addData("Wrist Angle", servo.getPosition());
-*/
             telemetry.update();
         }
 
@@ -300,7 +206,7 @@ public class MainDriveFTC2324 extends LinearOpMode {
             rightRear /= mag + turn;
         }
 
-        return new double[]{leftFront, rightFront, leftRear, rightRear};
+        return new double[] {leftFront, rightFront, leftRear, rightRear};
     }
 
 }
