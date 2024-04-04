@@ -27,6 +27,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+// Truett Van Slyke 2024
 package org.firstinspires.ftc.teamcode;
 
 
@@ -60,7 +61,6 @@ public class MainDrive2024 extends LinearOpMode {
         parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
         imu.initialize(parameters);
 
-
         frontLeftDrive  = hardwareMap.get(DcMotor.class, "front_left_drive");
         frontRightDrive = hardwareMap.get(DcMotor.class, "front_right_drive");
         backLeftDrive  = hardwareMap.get(DcMotor.class, "back_left_drive");
@@ -80,33 +80,62 @@ public class MainDrive2024 extends LinearOpMode {
         waitForStart();
         runtime.reset();
 
-
+        // Loop while opmode is enabled
         while (opModeIsActive()) {
             double[] drivePolar = leftStickPolar();
             double driveTheta = drivePolar[0];
             double driveMag   = drivePolar[1];
 
-            double[] motorPowers = calcMoterPowers(driveTheta, driveMag, 0);
+            double[] motorPowers = calcMotorPowersFromPolar(driveTheta, driveMag, 0);
 
             frontLeftDrive.setPower(motorPowers[0]);
             frontRightDrive.setPower(motorPowers[1]);
             backLeftDrive.setPower(motorPowers[2]);
             backRightDrive.setPower(motorPowers[3]);
+
+            telemetry.addData("STATUS", "Running");
+            telemetry.update();
         }
     }
 
-    private double[] leftStickPolar() {
-        double x = gamepad1.left_stick_x;
-        double y = gamepad1.left_stick_y;
-
+    private double[] rectToPolar(double x, double y) {
         double theta = Math.atan2(y, x);
         double mag = Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
 
         return new double[] {theta, mag};
     }
 
+    // Functions to easily retrieve controller input
+    private double[] leftStickPolar() {
+        double x = gamepad1.left_stick_x;
+        double y = gamepad1.left_stick_y;
 
-    private double[] calcMoterPowers(double theta, double mag, double turn) {
+        return rectToPolar(x, y);
+    }
+
+    private double[] leftStickRect() {
+        double x = gamepad1.left_stick_x;
+        double y = gamepad1.left_stick_y;
+
+        return new double[] {x, y};
+    }
+
+    private double [] rightStickPolar() {
+        double x = gamepad1.right_stick_x;
+        double y = gamepad1.right_stick_y;
+
+        return rectToPolar(x, y);
+    }
+
+    private double[] rightStickRect() {
+        double x = gamepad1.right_stick_x;
+        double y = gamepad1.right_stick_y;
+
+        return new double[] {x, y};
+    }
+
+    // Function to calculate motor powers needed to drive in given direction
+    private double[] calcMotorPowersFromPolar(double theta, double mag, double turn) {
         double sin = Math.sin(theta - Math.PI/4);
         double cos = Math.cos(theta - Math.PI/4);
         double max = Math.max(Math.abs(sin), Math.abs(cos));
@@ -124,5 +153,15 @@ public class MainDrive2024 extends LinearOpMode {
         }
 
         return new double[] {leftFront, rightFront, leftRear, rightRear};
+    }
+
+    private double[] calcMotorPowersFromRect(double x, double y, double turn) {
+        // Convert to polar so we can reuse calcMotorPowersFromPolar()
+        double[] polarCoords = rectToPolar(x, y);
+        double theta = polarCoords[0];
+        double mag   = polarCoords[1];
+
+        double[] motorPowers = calcMotorPowersFromPolar(theta, mag, turn);
+        return motorPowers;
     }
 }
