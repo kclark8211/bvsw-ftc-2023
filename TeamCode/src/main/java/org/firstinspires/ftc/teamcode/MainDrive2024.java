@@ -50,6 +50,10 @@ public class MainDrive2024 extends LinearOpMode {
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive = null;
 
+    private double targetOrientation = 0;
+
+    private boolean[] bumperStates = {false, false};
+
     BNO055IMU imu;
     Orientation angles;
 
@@ -82,11 +86,24 @@ public class MainDrive2024 extends LinearOpMode {
 
         // Loop while opmode is enabled
         while (opModeIsActive()) {
+            checkBumpers();
+            targetOrientation = formatAngle(targetOrientation);
+
+            double currentOrientation = imu.getAngularOrientation().firstAngle;
+            currentOrientation = formatAngle(currentOrientation);
+
+            double orientationCorrect = leastAngularCorrection(currentOrientation, targetOrientation);
+            orientationCorrect /= 90;
+            orientationCorrect = restrict(orientationCorrect, -1, 1);
+            if (Math.abs(orientationCorrect) < 0.02) {
+                orientationCorrect = 0;
+            }
+
             double[] drivePolar = leftStickPolar();
             double driveTheta = drivePolar[0];
             double driveMag   = drivePolar[1];
 
-            double[] motorPowers = calcMotorPowersFromPolar(driveTheta, driveMag, 0);
+            double[] motorPowers = calcMotorPowersFromPolar(driveTheta, driveMag, orientationCorrect);
 
             frontLeftDrive.setPower(motorPowers[0]);
             frontRightDrive.setPower(motorPowers[1]);
@@ -94,8 +111,47 @@ public class MainDrive2024 extends LinearOpMode {
             backRightDrive.setPower(motorPowers[3]);
 
             telemetry.addData("STATUS", "Running");
+            telemetry.addData("ORIENTATION CORRECT", orientationCorrect);
+            telemetry.addData("DRIVE THETA", driveTheta);
+            telemetry.addData("DRIVE MAG", driveMag);
+            telemetry.addData("IMU ANGLES", imu.getAngularOrientation().firstAngle);
+            telemetry.addData("TARGET ORIENTATION", targetOrientation);
             telemetry.update();
         }
+    }
+
+    private double formatAngle(double angle) {
+        // Restrict angle to [-180, 180]
+        while (Math.abs(angle) > 180) {
+            angle -= (Math.abs(angle) / angle) * 360; // Subtracts 180 * sign of number
+        }
+
+        return angle;
+    }
+    private double leastAngularCorrection(double angle, double targetAngle) {
+        angle = formatAngle(angle);
+        targetAngle = formatAngle(targetAngle);
+
+        double correction = targetAngle - angle;
+        double leastCorrection = correction;
+
+        angle += 360;
+        correction = targetAngle - angle;
+        if (Math.abs(correction) < Math.abs(leastCorrection)) {
+            leastCorrection = correction;
+        }
+
+        angle -= 360 * 2;
+        correction = targetAngle - angle;
+        if (Math.abs(correction) < Math.abs(leastCorrection)) {
+            leastCorrection = correction;
+        }
+
+        return leastCorrection;
+    }
+
+    private double restrict(double num, double min, double max) {
+        return Math.max(Math.min(max, num), min);
     }
 
     private double[] rectToPolar(double x, double y) {
@@ -163,5 +219,31 @@ public class MainDrive2024 extends LinearOpMode {
 
         double[] motorPowers = calcMotorPowersFromPolar(theta, mag, turn);
         return motorPowers;
+    }
+
+    private void checkBumpers() {
+        if (gamepad1.left_bumper) {
+            if (bumperStates[0]) {
+                // Bumper held
+            } else {
+                // Bumper new push
+                bumperStates[0] = true;
+                targetOrientation += 90;
+            }
+        } else {
+            // Bumper released
+            bumperStates[0] = false;
+        }
+        if (gamepad1.right_bumper) {
+            if (bumperStates[1]) {
+                // Bumper held
+            } else {
+                // Bumper new push
+                bumperStates[1] = true;
+                targetOrientation -= 90;}
+        } else {
+            // Bumper released
+            bumperStates[1] = false;
+        }
     }
 }
