@@ -49,10 +49,14 @@ public class MainDrive2024 extends LinearOpMode {
     private DcMotor backLeftDrive = null;
     private DcMotor frontRightDrive = null;
     private DcMotor backRightDrive = null;
-
+    private DcMotor elbowArm = null;
+    private DcMotor twistClaw = null;
+    private DcMotor rightClaw = null;
+    private DcMotor leftClaw = null;
     private double targetOrientation = 0;
 
-    private boolean[] bumperStates = {false, false};
+    private boolean[] bumperStates = {false, false}; // Left, Right
+    private boolean[] buttonStates = {false, false, false, false}; // A, B, X, Y
 
     BNO055IMU imu;
     Orientation angles;
@@ -87,6 +91,11 @@ public class MainDrive2024 extends LinearOpMode {
         // Loop while opmode is enabled
         while (opModeIsActive()) {
             checkBumpers();
+            checkButtons();
+            double[] rightStick = rightStickRect();
+            rightJoystick(rightStick[0], rightStick[1]);
+            loopCallback();
+
             targetOrientation = formatAngle(targetOrientation);
 
             double currentOrientation = imu.getAngularOrientation().firstAngle;
@@ -102,6 +111,9 @@ public class MainDrive2024 extends LinearOpMode {
             double[] drivePolar = leftStickPolar();
             double driveTheta = drivePolar[0];
             double driveMag   = drivePolar[1];
+
+            // Change driveTheta based on rotation so it always drives forward
+            driveTheta -= Math.toRadians(currentOrientation);
 
             double[] motorPowers = calcMotorPowersFromPolar(driveTheta, driveMag, orientationCorrect);
 
@@ -120,6 +132,7 @@ public class MainDrive2024 extends LinearOpMode {
         }
     }
 
+    // HELPER FUNCTIONS
     private double formatAngle(double angle) {
         // Restrict angle to [-180, 180]
         while (Math.abs(angle) > 180) {
@@ -166,7 +179,7 @@ public class MainDrive2024 extends LinearOpMode {
         double x = gamepad1.left_stick_x;
         double y = gamepad1.left_stick_y;
 
-        return rectToPolar(x, y);
+        return rectToPolar(-x, y); // Inverted to fix unknown issue with x-axis inverted driving
     }
 
     private double[] leftStickRect() {
@@ -221,6 +234,69 @@ public class MainDrive2024 extends LinearOpMode {
         return motorPowers;
     }
 
+    private void checkButtons() {
+        if (gamepad1.a) {
+            if (buttonStates[0]) {
+                // Button held
+            } else {
+                // Button new click
+                buttonStates[0] = true;
+                clickButtonA();
+            }
+        } else {
+            // Button released
+            if (buttonStates[0]) {
+                releaseButtonA();
+            }
+            buttonStates[0] = false;
+        }
+        if (gamepad1.b) {
+            if (buttonStates[1]) {
+                // Button held
+            } else {
+                // Button new click
+                buttonStates[1] = true;
+                clickButtonB();
+            }
+        } else {
+            // Button released
+            if (buttonStates[1]) {
+                releaseButtonB();
+            }
+            buttonStates[1] = false;
+        }
+        if (gamepad1.x) {
+            if (buttonStates[2]) {
+                // Button held
+            } else {
+                // Button new click
+                buttonStates[2] = true;
+                clickButtonX();
+            }
+        } else {
+            // Button released
+            if (buttonStates[2]) {
+                releaseButtonX();
+            }
+            buttonStates[2] = false;
+        }
+        if (gamepad1.y) {
+            if (buttonStates[3]) {
+                // Button held
+            } else {
+                // Button new click
+                buttonStates[3] = true;
+                clickButtonY();
+            }
+        } else {
+            // Button released
+            if (buttonStates[3]) {
+                releaseButtonY();
+            }
+            buttonStates[3] = false;
+        }
+    }
+
     private void checkBumpers() {
         if (gamepad1.left_bumper) {
             if (bumperStates[0]) {
@@ -240,10 +316,56 @@ public class MainDrive2024 extends LinearOpMode {
             } else {
                 // Bumper new push
                 bumperStates[1] = true;
-                targetOrientation -= 90;}
+                targetOrientation -= 90;
+            }
         } else {
             // Bumper released
             bumperStates[1] = false;
         }
+    }
+
+
+    // BUTTON CALLBACKS
+    private void clickButtonA() {
+        // Called with button [A] is CLICKED
+        return;
+    }
+    private void releaseButtonA() {
+        // Called with button [A] is RELEASED
+        return;
+    }
+    private void clickButtonB() {
+        // Called with button [B] is CLICKED
+        return;
+    }
+    private void releaseButtonB() {
+        // Called with button [B] is RELEASED
+        return;
+    }
+    private void clickButtonX() {
+        // Called with button [X] is CLICKED
+        return;
+    }
+    private void releaseButtonX() {
+        // Called with button [X] is RELEASED
+        return;
+    }
+    private void clickButtonY() {
+        // Called with button [Y] is CLICKED
+        return;
+    }
+    private void releaseButtonY() {
+        // Called with button [Y] is RELEASED
+        return;
+    }
+
+    // JOYSTICK CALLBACK
+    private void rightJoystick(double x, double y) {
+        // Called every cycle, given X and Y of right joystick
+        return;
+    }
+
+    private void loopCallback() {
+        // Called every cycle. Good for checking motors and giving them powers
     }
 }
